@@ -1,0 +1,34 @@
+---
+title: "P8105 HW3"
+author: "Hansheng Zhang"
+date: 2021-10-20
+output: github_document
+---
+
+```{r setup}
+library(tidyverse)
+library(readxl)
+```
+
+# Problem 1
+
+
+
+``` {r}
+
+```
+
+
+# Problem 2
+
+538.com - Read and merge data sets
+
+```{r}
+
+```
+
+# Problem 3
+
+```{r}
+
+```
