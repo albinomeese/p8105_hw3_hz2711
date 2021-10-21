@@ -8,20 +8,106 @@ output: github_document
 ```{r setup}
 library(tidyverse)
 library(readxl)
+library(p8105.datasets)
+
+knitr::opts_chunk$set(
+  warning = FALSE,
+  message = FALSE
+)
+theme_set(theme_minimal() + theme(legend.position = "bottom"))
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
 ```
 
 # Problem 1
 
-
+Exploration of instacart dataset
 
 ``` {r}
+library(p8105.datasets)
+data("instacart")
+```
 
+The `instacart` dataset has `r nrow(instacart)` observations of `r ncol(instacart)` variables. The variable names are `r names(instacart)`. Variables that are specific to the items include `product_id`, `department`, `product_name`, and `aisle`. Vvariables that are specific to the consumer include `reordered`, `user_id`, `days_since_prior_order`, and `order_dow`. This dataset has `r instacart %>% distinct(user_id) %>% count()` unique customers.
+
+```{r aisle_count}
+instacart %>% 
+  count(aisle) %>% 
+  arrange(desc(n))
+```
+
+There are `r instacart %>% distinct(aisle) %>% count()` aisles.
+The aisles items are ordered from the most are:
+
+1. fresh vegetables  
+1. fresh fruits  
+1. packaged vegetable fruits  
+1. yogurt  
+1. packaged cheese  
+
+Plot that shows number of items ordered in each aisle
+
+```{r aisles_plot_instacart}
+instacart %>% 
+  group_by(aisle) %>% 
+  summarize(item_count = n()) %>% 
+  filter(item_count > 10000) %>% 
+  ggplot(aes(x = reorder(aisle, item_count), y = item_count)) +
+  geom_bar(stat = "identity") +
+  coord_flip() + 
+  labs(
+    title = "Number of items ordered in each aisle (>1000)",
+    x = "Aisle name",
+    y = "Items ordered",
+    caption = "Data from the instacart dataset"
+  )
+```
+
+This table shows the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits” and the number of times each item is ordered.
+
+```{r instacart_table1}
+instacart %>% 
+  filter(aisle %in% c("baking ingredients", "dog food care", "packaged vegetables fruits")) %>% 
+  group_by(aisle) %>% 
+  count(product_name) %>% 
+  mutate(rank = min_rank(desc(n))) %>% 
+  filter(rank < 4) %>% 
+  arrange(aisle, rank) %>% 
+  knitr::kable()
+```
+
+This table shows the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week.
+
+```{r instacart_table2}
+instacart %>% 
+  mutate(
+  order_dow = recode(order_dow,
+                       "0" = "Sunday",
+                       "1" = "Monday",
+                       "2" = "Tuesday",
+                       "3" = "Wednesday",
+                       "4" = "Thursday",
+                       "5" = "Friday",
+                       "6" = "Saturday")
+  ) %>% 
+  filter(product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")) %>% 
+  group_by(product_name, order_dow) %>% 
+  summarise(mean_hour = mean(order_hour_of_day)) %>% 
+  pivot_wider(
+    names_from = order_dow,
+    values_from = mean_hour
+  ) %>% 
+  select(product_name, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday,
+         everything())
 ```
 
 
 # Problem 2
 
-538.com - Read and merge data sets
 
 ```{r}
 
