@@ -97,7 +97,7 @@ instacart %>%
   ) %>% 
   filter(product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")) %>% 
   group_by(product_name, order_dow) %>% 
-  summarise(mean_hour = mean(order_hour_of_day)) %>% 
+  summarize(mean_hour = mean(order_hour_of_day)) %>% 
   pivot_wider(
     names_from = order_dow,
     values_from = mean_hour
@@ -134,7 +134,7 @@ brfss_2002 =
   filter(year == 2002) %>% 
   group_by(state) %>% 
   distinct(location) %>% 
-  summarise(num_location = n()) %>% 
+  summarize(num_location = n()) %>% 
   filter(num_location >= 7) %>% 
   pull(state)
 brfss_2010 =
@@ -142,7 +142,7 @@ brfss_2010 =
   filter(year == 2010) %>% 
   group_by(state) %>% 
   distinct(location) %>% 
-  summarise(num_location = n()) %>% 
+  summarize(num_location = n()) %>% 
   filter(num_location >= 7) %>% 
   pull(state)
 ```
@@ -156,7 +156,7 @@ excellent_df <-
   brfss_df %>% 
   filter(response == "Excellent") %>% 
   group_by(state, year) %>% 
-  summarise(
+  summarize(
     mean_data_value = mean(data_value, na.rm = TRUE)
   )
 excellent_df %>% 
@@ -193,6 +193,56 @@ brfss_df %>%
 
 # Problem 3
 
-```{r}
+Tidy and clean accelerometer data and then create a table and a plot. 
 
+```{r,warning=FALSE}
+accel_data = read_csv("./Data/accel_data.csv") %>% 
+    pivot_longer(
+        activity.1:activity.1440,
+        names_to = "activity",
+        values_to = "activity_count") %>% 
+    mutate(
+        day_type = case_when(
+            day %in% c("Saturday", "Sunday") ~ "weekend",
+            TRUE ~ "weekday"),
+        day = fct_relevel(day, c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")))
 ```
+
+There are total `r nrow(accel_data)` observations and `r ncol(accel_data)` variables. The variables in this data set are `r names(accel_data)`.
+
+```{r activity_count_table}
+accel_data %>% 
+    group_by(week, day) %>% 
+    summarize(day_total = sum(activity_count)) %>% 
+    mutate(day_total = round(day_total, digits = 0)) %>% 
+    pivot_wider(
+        names_from = day,
+        values_from = day_total) %>% 
+    rename("Week" = week) %>% 
+    knitr::kable()
+```
+
+No significant activity trends appear. However, the last two weekends showed much lower activity counts than in previous weeks and weekends. Furthermore, the middle of the week generally showed less activity counts than other days of the week.  
+
+
+Time plot of all the activity metrics across each day of the week by the minute.  
+
+```{r activity_count_plot}
+accel_data %>% 
+    mutate(min_of_day = as.integer(str_sub(activity, 10, -1))) %>% 
+    ggplot(aes(x = min_of_day, y = activity_count, color = day)) +
+    geom_line() +
+    scale_x_continuous(
+        breaks = c(0, 360, 720, 1080, 1440),
+        labels = c("00:00", "06:00", "12:00", "18:00", "23:59")) +
+    labs(
+        title = "Daily activity",
+        x = "Time of Day",
+        y = "Level of Activity") +
+    viridis::scale_color_viridis(
+        name = "Day of the Week", 
+        discrete = TRUE)
+```
+
+The patient had increased activity on Sunday around 11:00, and on Friday and Saturday night around 20:00 to 22:00. 
+
